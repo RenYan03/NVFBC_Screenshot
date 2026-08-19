@@ -14,4 +14,4 @@ Visual Studio 2022（v143），x64，打开 `NVFBC_Screenshot.sln` 编译即可�
 
 ## 使用
 
-运行 `NVFBC_Screenshot.exe`，预览窗口实时显示屏幕画面，点击覆盖层按钮保存截图（文件名 `screenshot_时间戳.ext`）。需要 NVIDIA 显卡及可用的 `NvFBC64.dll`。
+运行 `NVFBC_Screenshot.exe`，预览窗口实时显示屏幕画面，点击覆盖层按钮保存截图。
