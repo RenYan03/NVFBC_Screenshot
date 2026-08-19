@@ -5,67 +5,6 @@
 #pragma comment(lib, "user32.lib")
 
 // ============================================================================
-// GetWindowDisplayAffinity Hook (bypass SetWindowDisplayAffinity protection)
-// Based on sub_DA87 in OpenArk
-// ============================================================================
-typedef BOOL (WINAPI* PFN_GetWindowDisplayAffinity)(HWND, DWORD*);
-
-struct X64Detour {
-    void* pTarget;
-    BYTE  origBytes[13];
-    BYTE  patchBytes[13];
-
-    bool Install(void* pSource, void* pHook) {
-        pTarget = pSource;
-        memcpy(origBytes, pSource, 13);
-        patchBytes[0] = 0x48; patchBytes[1] = 0xB8;
-        *(void**)(patchBytes + 2) = pHook;
-        patchBytes[10] = 0xFF; patchBytes[11] = 0xE0;
-        ApplyPatch();
-        return true;
-    }
-    void ApplyPatch() {
-        DWORD old;
-        VirtualProtect(pTarget, 13, PAGE_EXECUTE_READWRITE, &old);
-        memcpy(pTarget, patchBytes, 13);
-        VirtualProtect(pTarget, 13, old, &old);
-    }
-    void Unpatch() {
-        DWORD old;
-        VirtualProtect(pTarget, 13, PAGE_EXECUTE_READWRITE, &old);
-        memcpy(pTarget, origBytes, 13);
-        VirtualProtect(pTarget, 13, old, &old);
-    }
-    void Remove() { if (pTarget) { Unpatch(); pTarget = nullptr; } }
-};
-
-static X64Detour g_Detour;
-static PFN_GetWindowDisplayAffinity g_RealGetWindowDisplayAffinity;
-
-static BOOL WINAPI Hook_GetWindowDisplayAffinity(HWND hWnd, DWORD* pdwAffinity) {
-    g_Detour.Unpatch();
-    BOOL result = g_RealGetWindowDisplayAffinity(hWnd, pdwAffinity);
-    g_Detour.ApplyPatch();
-    if (pdwAffinity) {
-        *pdwAffinity &= ~1u;
-        *pdwAffinity &= 0xFFFFFFEE;
-    }
-    return result;
-}
-
-void NvFBC::InstallDisplayAffinityHook() {
-    HMODULE hUser32 = GetModuleHandleA("user32.dll");
-    if (!hUser32) return;
-    g_RealGetWindowDisplayAffinity = (PFN_GetWindowDisplayAffinity)
-        GetProcAddress(hUser32, "GetWindowDisplayAffinity");
-    if (g_RealGetWindowDisplayAffinity) {
-        g_Detour.Install((void*)g_RealGetWindowDisplayAffinity,
-                         (void*)Hook_GetWindowDisplayAffinity);
-        printf("[+] GetWindowDisplayAffinity hooked\n");
-    }
-}
-
-// ============================================================================
 // NvFBC implementation
 // ============================================================================
 
@@ -127,7 +66,7 @@ bool NvFBC::LoadNvidiaDrivers() {
 }
 
 bool NvFBC::Initialize() {
-    InstallDisplayAffinityHook();
+
 
     // Detect screen resolution once
     HDC hDC = CreateDCA("DISPLAY", nullptr, nullptr, nullptr);
@@ -259,7 +198,6 @@ bool NvFBC::GrabFrame(const BYTE*& outData, int& outWidth, int& outHeight) {
 }
 
 void NvFBC::Cleanup() {
-    g_Detour.Remove();
     if (m_pInstance) {
         void** vt = (void**)*((void***)m_pInstance);
         typedef HRESULT (__fastcall* PFN_Rel)(void*);

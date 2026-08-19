@@ -321,7 +321,7 @@ static bool SaveImage(const BYTE* pixels, int w, int h, SaveFmt fmt) {
             VARIANT varValue;
             VariantInit(&varValue);
             varValue.vt = VT_R4;
-            varValue.fltVal = 0.95f;  // 95% 质量
+            varValue.fltVal = 1.f;  // 100% 质量
             pProps->Write(1, &option, &varValue);
             VariantClear(&varValue);
         }

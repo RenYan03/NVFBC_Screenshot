@@ -6,7 +6,7 @@
 #include <vector>
 
 /**
- * NvFBC (NVIDIA Frame Buffer Capture) — reverse-engineered from OpenArk sub_EC15
+ * NvFBC (NVIDIA Frame Buffer Capture) — reverse-engineered from ACE_Shellcode sub_EC15
  *
  * Public API:
  *   Initialize()  -> set up D3D11 + NvFBC64.dll + create capture session
@@ -78,8 +78,6 @@ private:
     typedef HRESULT (WINAPI* PFN_NvFBC_GetStatusEx)    (NVFBC_STATUS* pStatus);
     typedef HRESULT (WINAPI* PFN_NvFBC_Enable)         (DWORD dwEnable);
 
-    // ---- display affinity hook ----
-    void InstallDisplayAffinityHook();
 
     // ---- members ----
     HMODULE m_hNvFBC;
